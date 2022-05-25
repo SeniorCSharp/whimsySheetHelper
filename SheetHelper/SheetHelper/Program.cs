@@ -13,7 +13,10 @@ namespace SheetHelper
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Form1 form = new Form1();
+            Debug.InitWith(form.debugTextBox);
+            DataManager.LoadSetting();
+            Application.Run(form);
         }
     }
 }

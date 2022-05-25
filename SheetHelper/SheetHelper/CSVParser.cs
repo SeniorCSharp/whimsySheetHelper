@@ -12,15 +12,19 @@ namespace SheetHelper
         {
             if (File.Exists(filePath))
             {
-                IEnumerable<string[]> mapped = new List<string[]>();
+                List<string[]> rows = new List<string[]>();
 
                 using (StreamReader reader = new StreamReader(filePath))
-                using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                using (CsvParser parser = new CsvParser(reader, CultureInfo.InvariantCulture))
                 {
-                    mapped = csv.GetRecords<string[]>();
+                    while (parser.Read())
+                    {
+                        string[] row = parser.Record;
+                        rows.Add(row);
+                    }
                 }
 
-                return (List<string[]>)mapped;
+                return rows;
             }
 
             return null;
