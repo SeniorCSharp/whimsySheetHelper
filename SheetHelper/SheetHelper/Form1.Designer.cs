@@ -37,6 +37,7 @@
             this.debugTextBox = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.label2 = new System.Windows.Forms.Label();
+            this.buttonMapFiles = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -146,12 +147,30 @@
             this.label2.TabIndex = 0;
             this.label2.Text = "Or drag your files here";
             // 
+            // buttonMapFiles
+            // 
+            this.buttonMapFiles.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.buttonMapFiles.Cursor = System.Windows.Forms.Cursors.Default;
+            this.buttonMapFiles.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.buttonMapFiles.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            this.buttonMapFiles.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            this.buttonMapFiles.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.buttonMapFiles.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.buttonMapFiles.ForeColor = System.Drawing.Color.LightGreen;
+            this.buttonMapFiles.Location = new System.Drawing.Point(212, 36);
+            this.buttonMapFiles.Name = "buttonMapFiles";
+            this.buttonMapFiles.Size = new System.Drawing.Size(127, 29);
+            this.buttonMapFiles.TabIndex = 7;
+            this.buttonMapFiles.Text = "Make mapping";
+            this.buttonMapFiles.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.ClientSize = new System.Drawing.Size(855, 526);
+            this.Controls.Add(this.buttonMapFiles);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.debugTextBox);
@@ -180,6 +199,7 @@
         public System.Windows.Forms.TextBox debugTextBox;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Button buttonMapFiles;
     }
 }
 
