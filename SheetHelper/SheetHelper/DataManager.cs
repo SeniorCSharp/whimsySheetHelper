@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Management.Instrumentation;
+using System.Windows.Forms;
 using CsvHelper;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Newtonsoft.Json;
@@ -52,6 +55,10 @@ namespace SheetHelper
                 CurrentFolder = dialog.FileName;
                 AddFiles(SaverLoader.GetFileNames(dialog.FileName));
             }
+        }
+
+        public static void Test()
+        {
         }
 
         public static void CleanFiles()
@@ -107,7 +114,17 @@ namespace SheetHelper
 
                         if (possibleConvertions.Count > 1)
                         {
-                            //предлагаем выбрать через диалоговое окно варианты и выбираем его в качестве преобразования
+                            if (!possibleConvertions.Exists(x => x.Converter == ConverterType.defaultText))
+                            {
+                                ValueHandler handler = DataManager.Setting.handlers.FirstOrDefault(x => x.Converter == ConverterType.defaultText);
+                                if (handler != null)
+                                {
+                                    possibleConvertions.Add(handler);
+                                }
+                            }
+
+                            delegates[i] = ShowDialog(possibleConvertions, fileName, headerField);
+                            continue;
                         }
 
                         if (possibleConvertions.Count == 1)
@@ -130,6 +147,99 @@ namespace SheetHelper
         private static void InitResultFile()
         {
             result = new CSVFile(new List<string[]>());
+        }
+
+        public static ValueHandler ShowDialog(List<ValueHandler> options, string filename, string headerName)
+        {
+            Form form = new Form();
+            form.Width = 500;
+            form.Height = 500;
+            form.StartPosition = FormStartPosition.Manual;
+            form.BackColor = Color.FromArgb(32, 32, 32);
+            form.Location = Cursor.Position;
+            form.FormBorderStyle = FormBorderStyle.None;
+
+            Panel panel = new Panel();
+            panel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            panel.Location = new System.Drawing.Point(0, 0);
+            panel.Size = new System.Drawing.Size(500, 500);
+            panel.Name = "panel3";
+
+
+            Label textLabel = new Label();
+            textLabel.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            textLabel.Location = new System.Drawing.Point(10, 10);
+            textLabel.Size = new System.Drawing.Size(365, 80);
+            textLabel.ForeColor = System.Drawing.Color.LightGreen;
+            textLabel.Text = "Unable to accurately determine cell format. Please select your preferred option from the list below.\r\nFIle :" +
+                             filename + "\r\nHeader : " + headerName;
+
+            Button confirmation = new Button();
+            confirmation.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            confirmation.Cursor = System.Windows.Forms.Cursors.Default;
+            confirmation.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            confirmation.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            confirmation.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            confirmation.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            confirmation.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            confirmation.ForeColor = System.Drawing.Color.LightGreen;
+            confirmation.Location = new System.Drawing.Point(375, 10);
+            confirmation.Size = new System.Drawing.Size(80, 30);
+            confirmation.Text = "Ok";
+            confirmation.UseVisualStyleBackColor = true;
+            confirmation.Click += (sender, e) =>
+            {
+                form.DialogResult = DialogResult.OK;
+                form.Close();
+            };
+            confirmation.Enabled = false;
+
+            CheckedListBox box = new CheckedListBox();
+            box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            box.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            box.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            box.ForeColor = System.Drawing.Color.LightGreen;
+            box.FormattingEnabled = true;
+            box.Items.AddRange(options.Select(x => x.Converter.ToString()).ToArray());
+
+            box.Location = new System.Drawing.Point(10, 85);
+            box.Size = new System.Drawing.Size(200, 150);
+            box.CheckOnClick = true;
+            box.ItemCheck += (sender, args) =>
+            {
+                bool enabled = false;
+                for (int i = 0; i < box.Items.Count; ++i)
+                {
+                    if (i != args.Index)
+                    {
+                        box.SetItemChecked(i, false);
+                    }
+
+                    if (box.GetItemChecked(i))
+                    {
+                        enabled = true;
+                    }
+                }
+
+                confirmation.Enabled = !enabled;
+            };
+
+            form.Controls.Add(confirmation);
+            form.Controls.Add(textLabel);
+            form.Controls.Add(box);
+            form.Controls.Add(panel);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                for (int i = 0; i < box.Items.Count; ++i)
+                {
+                    if (box.GetItemChecked(i))
+                    {
+                        return options[i];
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

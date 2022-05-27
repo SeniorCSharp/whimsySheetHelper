@@ -53,5 +53,15 @@ namespace SheetHelper
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
             DataManager.AddFiles(files.ToList());
         }
+
+        private void buttonMapFiles_Click(object sender, EventArgs e)
+        {
+            DataManager.Test();
+            //DataManager.MapAllFiles();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+        }
     }
 }

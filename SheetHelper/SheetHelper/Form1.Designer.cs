@@ -119,7 +119,7 @@
             this.debugTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.debugTextBox.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.debugTextBox.ForeColor = System.Drawing.Color.LightGreen;
-            this.debugTextBox.Location = new System.Drawing.Point(582, 41);
+            this.debugTextBox.Location = new System.Drawing.Point(584, 42);
             this.debugTextBox.Multiline = true;
             this.debugTextBox.Name = "debugTextBox";
             this.debugTextBox.ReadOnly = true;
@@ -163,6 +163,7 @@
             this.buttonMapFiles.TabIndex = 7;
             this.buttonMapFiles.Text = "Make mapping";
             this.buttonMapFiles.UseVisualStyleBackColor = true;
+            this.buttonMapFiles.Click += new System.EventHandler(this.buttonMapFiles_Click);
             // 
             // Form1
             // 
@@ -183,6 +184,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "Form1";
             this.Text = "SheetHelper";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
