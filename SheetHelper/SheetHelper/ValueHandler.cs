@@ -1,47 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Newtonsoft.Json;
 
 namespace SheetHelper
 {
-    [Serializable]
-    internal class ValueHandler
+    public delegate string ConvertionDelegate(string fieldValue);
+
+    public delegate bool SuitableDelegate(ValueHandler handler, string fileName, List<List<string>> table, int columnIndex);
+
+    public class ValueHandler
     {
         private const string ResultDateFormat = "dd.MM.yyyy";
 
-        public delegate string ConvertionDelegate(string fieldValue);
-
-        public delegate bool SuitableDelegate(ValueHandler handler, string fileName, List<List<string>> table, int columnIndex);
-
-        public static Dictionary<ConverterType, ConvertionDelegate> HandlersDictionary = new Dictionary<ConverterType, ConvertionDelegate>()
+        private static Dictionary<ConverterType, ConvertionDelegate> handlersDictionary = new Dictionary<ConverterType, ConvertionDelegate>()
         {
             { ConverterType.defaultText, DefaultTextHandler },
             { ConverterType.euDate, DateHandlerEU },
             { ConverterType.enDate, DateHandlerEN },
         };
 
-        public static Dictionary<ConverterType, SuitableDelegate> SuitableDictionary = new Dictionary<ConverterType, SuitableDelegate>()
+        private static Dictionary<ConverterType, SuitableDelegate> suitableDictionary = new Dictionary<ConverterType, SuitableDelegate>()
         {
             { ConverterType.defaultText, DefaultTextSuitable },
             { ConverterType.euDate, DateSuitableEU },
             { ConverterType.enDate, DateSuitableEN },
         };
 
+        [JsonIgnore] public SuitableDelegate SuitableFunction => suitableDictionary[Converter];
+        [JsonIgnore] public ConvertionDelegate ConvertionFunction => handlersDictionary[Converter];
+
+        #region serialized data
+
+        [JsonProperty("posibleColumnPatterns")]
         public List<string> PossibleColumnPatterns;
-        public string OutputColumnKey;
-        public ConverterType Converter;
 
-        public SuitableDelegate SuitableFunction => SuitableDictionary[Converter];
-        public ConvertionDelegate ConvertionFunction => HandlersDictionary[Converter];
+        [JsonProperty("destination")] public string Destination;
+        [JsonProperty("converter")] public ConverterType Converter;
 
-        public List<string> AdditionInfo;
+        #endregion
+
+        public ValueHandler()
+        {
+        }
+
+        public ValueHandler GetCopy()
+        {
+            ValueHandler ret = new ValueHandler
+            {
+                Destination = Destination,
+                Converter = Converter
+            };
+            ret.PossibleColumnPatterns = new List<string>(PossibleColumnPatterns.Count);
+            foreach (string pattern in PossibleColumnPatterns)
+            {
+                ret.PossibleColumnPatterns.Add(pattern);
+            }
+
+            return ret;
+        }
 
         public bool IsBasiclyFit(string columnName)
         {
             columnName = columnName.ToLower();
             foreach (string pattern in PossibleColumnPatterns)
             {
-                if (columnName.Contains(pattern))
+                if (columnName.Contains(pattern.ToLower()))
                 {
                     return true;
                 }

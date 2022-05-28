@@ -1,13 +1,11 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Management.Instrumentation;
 using System.Windows.Forms;
-using CsvHelper;
-using Microsoft.WindowsAPICodePack.Dialogs;
-using Newtonsoft.Json;
 
 namespace SheetHelper
 {
@@ -31,6 +29,7 @@ namespace SheetHelper
                 if (string.IsNullOrEmpty(fileContent))
                 {
                     Debug.Log("Can`t find setting file. Make new...");
+                    setting = Setting.DefaultSetting;
                 }
                 else
                 {
@@ -59,6 +58,21 @@ namespace SheetHelper
 
         public static void Test()
         {
+            Debug.Log(1);
+            ShowDialog(Setting.Handlers, "some folder", "some header");
+            Debug.Log(2);
+        }
+
+        public static void SaveSettings()
+        {
+            string fileContent = JsonConvert.SerializeObject(Setting);
+            SaverLoader.LocalSaveTo(SettingFileName, fileContent);
+        }
+
+        public static void SaveResult(string path)
+        {
+            CSVParser.SetArrayToFile(path, result.Content);
+            MessageBox.Show("Файл сохранен");
         }
 
         public static void CleanFiles()
@@ -81,27 +95,33 @@ namespace SheetHelper
 
         public static void MapAllFiles()
         {
-            if (allFiles != null && allFiles.Count > 0)
+            InitResultFile();
+            SetInResultFileFirstLine();
+            Dictionary<string, int> mappingDictionary = new Dictionary<string, int>();
+            for (int i = 0; i < result.Content[0].Count; i++)
             {
-                InitResultFile();
-                SetInResultFileFirstLine();
-                foreach (KeyValuePair<string, CSVFile> file in allFiles)
+                mappingDictionary.Add(result.Content[0][i], i);
+            }
+
+            foreach (KeyValuePair<string, CSVFile> file in allFiles)
+            {
+                string fileName = file.Key;
+                List<List<string>> table = file.Value.Content;
+                List<string> header = table[0];
+                List<ValueHandler> delegates = new List<ValueHandler>(header.Count);
+                for (int i = 0; i < header.Count; i++)
                 {
-                    string fileName = file.Key;
-                    List<List<string>> table = file.Value.Content;
-                    List<string> header = table[0];
-                    List<ValueHandler> delegates = new List<ValueHandler>(header.Count);
-                    for (int i = 0; i < header.Count; i++)
-                    {
-                        delegates.Add(null);
-                    }
+                    delegates.Add(null);
+                }
 
-                    for (int i = 0; i < header.Count; i++)
-                    {
-                        string headerField = header[i];
-                        List<ValueHandler> possibleConvertions = new List<ValueHandler>();
+                for (int i = 0; i < header.Count; i++)
+                {
+                    string headerField = header[i];
+                    List<ValueHandler> possibleConvertions = new List<ValueHandler>();
 
-                        foreach (ValueHandler handler in DataManager.Setting.handlers)
+                    foreach (ValueHandler handler in DataManager.Setting.Handlers)
+                    {
+                        if (Setting.IsDestinationExist(handler.Destination))
                         {
                             if (handler.IsBasiclyFit(headerField))
                             {
@@ -111,31 +131,42 @@ namespace SheetHelper
                                 }
                             }
                         }
+                    }
 
-                        if (possibleConvertions.Count > 1)
-                        {
-                            if (!possibleConvertions.Exists(x => x.Converter == ConverterType.defaultText))
-                            {
-                                ValueHandler handler = DataManager.Setting.handlers.FirstOrDefault(x => x.Converter == ConverterType.defaultText);
-                                if (handler != null)
-                                {
-                                    possibleConvertions.Add(handler);
-                                }
-                            }
+                    if (possibleConvertions.Count > 1)
+                    {
+                        // if (!possibleConvertions.Exists(x => x.Converter == ConverterType.defaultText))
+                        // {
+                        //     ValueHandler handler = DataManager.Setting.Handlers.FirstOrDefault(x => x.Converter == ConverterType.defaultText);
+                        //     if (handler != null)
+                        //     {
+                        //         possibleConvertions.Add(handler);
+                        //     }
+                        // }
 
-                            delegates[i] = ShowDialog(possibleConvertions, fileName, headerField);
-                            continue;
-                        }
+                        delegates[i] = ShowDialog(possibleConvertions, fileName, headerField);
+                        continue;
+                    }
 
-                        if (possibleConvertions.Count == 1)
-                        {
-                            delegates[i] = possibleConvertions[0];
-                        }
+                    if (possibleConvertions.Count == 1)
+                    {
+                        delegates[i] = possibleConvertions[0];
                     }
                 }
-                //на этом этапе у нас готовы функции преобразования, так что проходимся по файлику и преобразуем с помощью функций
-                //филды в строках, и добавляем по месту эти филды в результирующий список
-                //а потом сохраняем по кнопке сейв - выводим окошко - куда сохранить
+
+                for (int i = 0; i < table.Count; i++)
+                {
+                    string[] row = new string[result.Content[0].Count];
+                    for (int j = 0; j < header.Count; j++)
+                    {
+                        if (delegates[j] != null)
+                        {
+                            row[mappingDictionary[delegates[j].Destination]] = delegates[j].ConvertionFunction(table[i][j]);
+                        }
+                    }
+
+                    result.Content.Add(row.ToList());
+                }
             }
         }
 
@@ -151,37 +182,44 @@ namespace SheetHelper
 
         public static ValueHandler ShowDialog(List<ValueHandler> options, string filename, string headerName)
         {
-            Form form = new Form();
-            form.Width = 500;
-            form.Height = 500;
-            form.StartPosition = FormStartPosition.Manual;
-            form.BackColor = Color.FromArgb(32, 32, 32);
-            form.Location = Cursor.Position;
-            form.FormBorderStyle = FormBorderStyle.None;
+            Form form = new Form
+            {
+                Width = 500,
+                Height = 500,
+                StartPosition = FormStartPosition.Manual,
+                BackColor = Color.FromArgb(32, 32, 32),
+                Location = Cursor.Position,
+                FormBorderStyle = FormBorderStyle.None
+            };
 
-            Panel panel = new Panel();
-            panel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            panel.Location = new System.Drawing.Point(0, 0);
-            panel.Size = new System.Drawing.Size(500, 500);
-            panel.Name = "panel3";
+            Panel panel = new Panel
+            {
+                BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle,
+                Location = new System.Drawing.Point(0, 0),
+                Size = new System.Drawing.Size(500, 500),
+                Name = "panel3"
+            };
 
+            Label textLabel = new Label
+            {
+                Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 204),
+                Location = new System.Drawing.Point(10, 10),
+                Size = new System.Drawing.Size(365, 85),
+                ForeColor = System.Drawing.Color.LightGreen,
+                Text = "Unable to accurately determine column format. Please select your preferred option from the list below.\r\nFile : " +
+                       filename + "\r\nColumn : " + headerName
+            };
 
-            Label textLabel = new Label();
-            textLabel.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            textLabel.Location = new System.Drawing.Point(10, 10);
-            textLabel.Size = new System.Drawing.Size(365, 80);
-            textLabel.ForeColor = System.Drawing.Color.LightGreen;
-            textLabel.Text = "Unable to accurately determine cell format. Please select your preferred option from the list below.\r\nFIle :" +
-                             filename + "\r\nHeader : " + headerName;
-
-            Button confirmation = new Button();
-            confirmation.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            confirmation.Cursor = System.Windows.Forms.Cursors.Default;
+            Button confirmation = new Button
+            {
+                BackgroundImageLayout = System.Windows.Forms.ImageLayout.None,
+                Cursor = System.Windows.Forms.Cursors.Default
+            };
             confirmation.FlatAppearance.BorderColor = System.Drawing.Color.Black;
-            confirmation.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
-            confirmation.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            confirmation.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(32, 32, 32);
+            confirmation.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(32, 32, 32);
             confirmation.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            confirmation.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            confirmation.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 204);
             confirmation.ForeColor = System.Drawing.Color.LightGreen;
             confirmation.Location = new System.Drawing.Point(375, 10);
             confirmation.Size = new System.Drawing.Size(80, 30);
@@ -194,16 +232,20 @@ namespace SheetHelper
             };
             confirmation.Enabled = false;
 
-            CheckedListBox box = new CheckedListBox();
-            box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
-            box.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            box.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            box.ForeColor = System.Drawing.Color.LightGreen;
-            box.FormattingEnabled = true;
-            box.Items.AddRange(options.Select(x => x.Converter.ToString()).ToArray());
+            CheckedListBox box = new CheckedListBox
+            {
+                BackColor = System.Drawing.Color.FromArgb(32, 32, 32),
+                BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle,
+                Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 204),
+                ForeColor = System.Drawing.Color.LightGreen,
+                FormattingEnabled = true
+            };
+            List<string> opt = options.Select(x => x.Converter.ToString() + "; target -> " + x.Destination).ToList();
+            opt.Add("do not process this column");
+            box.Items.AddRange(opt.ToArray());
 
-            box.Location = new System.Drawing.Point(10, 85);
-            box.Size = new System.Drawing.Size(200, 150);
+            box.Location = new System.Drawing.Point(10, 95);
+            box.Size = new System.Drawing.Size(400, 150);
             box.CheckOnClick = true;
             box.ItemCheck += (sender, args) =>
             {
@@ -234,11 +276,16 @@ namespace SheetHelper
                 {
                     if (box.GetItemChecked(i))
                     {
-                        return options[i];
+                        if (i != box.Items.Count - 1)
+                        {
+                            Debug.Log(i);
+                            return options[i];
+                        }
                     }
                 }
             }
 
+            Debug.Log("null");
             return null;
         }
     }

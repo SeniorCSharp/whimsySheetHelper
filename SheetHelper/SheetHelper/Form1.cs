@@ -56,12 +56,27 @@ namespace SheetHelper
 
         private void buttonMapFiles_Click(object sender, EventArgs e)
         {
-            DataManager.Test();
-            //DataManager.MapAllFiles();
+            // DataManager.Test();
+            DataManager.MapAllFiles();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            DataManager.SaveSettings();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (saveFileDialog1.ShowDialog() == DialogResult.Cancel)
+            {
+                return;
+            }
+
+            DataManager.SaveResult(saveFileDialog1.FileName);
         }
     }
 }
