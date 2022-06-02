@@ -10,6 +10,10 @@ namespace SheetHelper
         defaultText,
         enDate,
         euDate,
+        accountPayoneer,
+        accountUpwork,
+        amount,
+        amountMinus
     }
 
     [Serializable]
@@ -60,6 +64,42 @@ namespace SheetHelper
                         Converter = ConverterType.defaultText,
                         Destination = "Description",
                         PossibleColumnPatterns = new List<string>() { "description" }
+                    },
+                    new ValueHandler()
+                    {
+                        Converter = ConverterType.accountPayoneer,
+                        Destination = "Account",
+                        PossibleColumnPatterns = new List<string>() { "account", "payoneer" }
+                    },
+                    new ValueHandler()
+                    {
+                        Converter = ConverterType.accountUpwork,
+                        Destination = "Account",
+                        PossibleColumnPatterns = new List<string>() { "account", "upwork" }
+                    },
+                    new ValueHandler()
+                    {
+                        Converter = ConverterType.amount,
+                        Destination = "Amount",
+                        PossibleColumnPatterns = new List<string>() { "amount", "credit", "deposit" }
+                    },
+                    new ValueHandler()
+                    {
+                        Converter = ConverterType.amountMinus,
+                        Destination = "Amount",
+                        PossibleColumnPatterns = new List<string>() { "debit", "withdraw" }
+                    },
+                    new ValueHandler()
+                    {
+                        Converter = ConverterType.defaultText,
+                        Destination = "Curr",
+                        PossibleColumnPatterns = new List<string>() { "currency", "curr" }
+                    },
+                    new ValueHandler()
+                    {
+                        Converter = ConverterType.defaultText,
+                        Destination = "P/F",
+                        PossibleColumnPatterns = new List<string>() { "P/F" }
                     },
                 }
             };

@@ -154,14 +154,14 @@ namespace SheetHelper
                     }
                 }
 
-                for (int i = 0; i < table.Count; i++)
+                for (int i = 1; i < table.Count; i++)
                 {
                     string[] row = new string[result.Content[0].Count];
                     for (int j = 0; j < header.Count; j++)
                     {
                         if (delegates[j] != null)
                         {
-                            row[mappingDictionary[delegates[j].Destination]] = delegates[j].ConvertionFunction(table[i][j]);
+                            row[mappingDictionary[delegates[j].Destination]] += delegates[j].ConvertionFunction(table[i][j]);
                         }
                     }
 
@@ -285,7 +285,6 @@ namespace SheetHelper
                 }
             }
 
-            Debug.Log("null");
             return null;
         }
     }
