@@ -87,7 +87,7 @@ namespace SheetHelper
             columnName = columnName.ToLower();
             foreach (string pattern in PossibleColumnPatterns)
             {
-                if (columnName.Contains(pattern.ToLower()))
+                if (columnName == pattern.ToLower())
                 {
                     Debug.Log("find column mapping [" + columnName + "] -> [" + pattern + "]");
                     return true;
@@ -220,29 +220,68 @@ namespace SheetHelper
 
         private static string AmountHandler(string fieldValue)
         {
-            NumberStyles style = NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands;
+            //find fractional
+            int lastIndex1 = fieldValue.Length - 2;
+            int lastIndex2 = fieldValue.Length - 3;
+
             fieldValue = fieldValue.Replace(" ", "");
 
-            foreach (KeyValuePair<Cultures, CultureInfo> culture in cultures)
+            if (fieldValue.LastIndexOf(".") == lastIndex1 || fieldValue.LastIndexOf(",") == lastIndex1)
             {
                 try
                 {
-                    decimal number = decimal.Parse(fieldValue, style, culture.Value);
-                    return number.ToString("G", CultureInfo.CreateSpecificCulture("eu-ES"));
+                    int fract = int.Parse(fieldValue.Substring(lastIndex1 + 1));
+                    fieldValue = fieldValue.Substring(0, lastIndex1);
+                    fieldValue = fieldValue.Replace(".", "");
+                    fieldValue = fieldValue.Replace(",", "");
+                    int integerPart = int.Parse(fieldValue);
+                    return integerPart.ToString() + "," + fract.ToString();
                 }
-                catch (FormatException)
+                catch (Exception)
                 {
+                    Debug.Log("can not parse this money value -> " + fieldValue.Substring(lastIndex1 + 1));
                 }
             }
+            if (fieldValue.LastIndexOf(".") == lastIndex2 || fieldValue.LastIndexOf(",") == lastIndex2)
+            {
+                try
+                {
+                    int fract = int.Parse(fieldValue.Substring(lastIndex2 + 1));
+                    fieldValue = fieldValue.Substring(0, lastIndex2);
+                    fieldValue = fieldValue.Replace(".", "");
+                    fieldValue = fieldValue.Replace(",", "");
+                    int integerPart = int.Parse(fieldValue);
+                    return integerPart.ToString() + "," + fract.ToString();
+                }
+                catch (Exception)
+                {
+                    Debug.Log("can not parse this money value -> " + fieldValue.Substring(lastIndex2 + 1));
+                }
+            }
+            try
+            {
+                fieldValue = fieldValue.Replace(".", "");
+                fieldValue = fieldValue.Replace(",", "");
+                int integerPart = int.Parse(fieldValue);
+                return integerPart.ToString() + ",00";
+            }
+            catch (Exception)
+            {
+                Debug.Log("can not parse this money value -> " + fieldValue);
+            }
 
-            return fieldValue;
+            return "";
         }
 
         private static string AmountMinusHandler(string fieldValue)
         {
             if (!string.IsNullOrEmpty(fieldValue))
             {
-                return "-" + AmountHandler(fieldValue);
+                string amount = AmountHandler(fieldValue);
+                if (!string.IsNullOrEmpty(amount))
+                {
+                    return "-" + amount;
+                }
             }
 
             return "";

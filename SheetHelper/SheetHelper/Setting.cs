@@ -81,13 +81,13 @@ namespace SheetHelper
                     {
                         Converter = ConverterType.amount,
                         Destination = "Amount",
-                        PossibleColumnPatterns = new List<string>() { "amount", "credit", "deposit" }
+                        PossibleColumnPatterns = new List<string>() { "amount", "credit", "credit amount", "deposit" }
                     },
                     new ValueHandler()
                     {
                         Converter = ConverterType.amountMinus,
                         Destination = "Amount",
-                        PossibleColumnPatterns = new List<string>() { "debit", "withdraw" }
+                        PossibleColumnPatterns = new List<string>() { "debit", "debit amount", "withdraw" }
                     },
                     new ValueHandler()
                     {
